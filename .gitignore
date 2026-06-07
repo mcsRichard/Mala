@@ -1,0 +1,22 @@
+# Android
+*.iml
+.gradle/
+local.properties
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+*.orig
+
+# Heap dumps
+*.hprof
+
+# Firebase — contains project credentials, do not commit to public repos
+app/google-services.json

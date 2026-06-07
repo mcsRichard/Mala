@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mala</string>
+    <string name="create_account_title">Create Account</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="confirm_password_hint">Confirm password</string>
+    <string name="btn_login">Log in</string>
+    <string name="btn_register">Create account</string>
+    <string name="btn_logout">Log out</string>
+    <string name="text_no_account">Don\'t have an account? Register</string>
+    <string name="text_have_account">Already have an account? Log in</string>
+    <string name="home_welcome">Welcome</string>
+    <string name="home_title">Today\'s Practice</string>
+    <string name="error_password_mismatch">Passwords do not match</string>
+    <string name="no_practices">No practices yet</string>
+    <string name="add_first_practice">Add your first practice</string>
+    <string name="add_practice_title">Add Practice</string>
+    <string name="edit_practice_title">Edit Practice</string>
+    <string name="practice_name">Practice name</string>
+    <string name="practice_type">Type</string>
+    <string name="type_chanting">Chanting</string>
+    <string name="type_meditation">Meditation</string>
+    <string name="type_other">Other</string>
+    <string name="goal_type">Goal</string>
+    <string name="goal_count">Count</string>
+    <string name="goal_time">Time</string>
+    <string name="goal_daily_count">Daily Count</string>
+    <string name="goal_checkin">Daily Check-in</string>
+    <string name="goal_lifetime">Lifetime</string>
+    <string name="goal_course">Course</string>
+    <string name="target_count">Target count</string>
+    <string name="target_minutes">Target (minutes)</string>
+    <string name="target_count_hint">Target count</string>
+    <string name="target_lessons_hint">Total lessons</string>
+    <string name="period_type">Period</string>
+    <string name="period_daily">Daily</string>
+    <string name="period_long_term">Long-term</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="log_amount">Enter amount</string>
+    <string name="lang_select">Language</string>
+    <string name="lang_system">Follow system</string>
+    <string name="reminder_settings_title">Reminders</string>
+    <string name="reminder_settings_entry">Reminders</string>
+    <string name="language_entry">Language</string>
+    <string name="morning_reminder">Morning Reminder</string>
+    <string name="evening_reminder">Evening Reminder</string>
+    <string name="change_time">Change</string>
+    <string name="select_time">Select Time</string>
+    <string name="notif_channel_name">Daily Practice Reminders</string>
+    <string name="notif_channel_desc">Reminders for your daily practice</string>
+    <string name="notif_title">Daily Practice Reminder</string>
+    <string name="notif_permission_note">Notification permission is required to receive reminders.</string>
+    <string name="grant_permission">Grant Permission</string>
+    <string name="syncing">Syncing data…</string>
+    <string name="snackbar_logged">Progress saved ✓</string>
+    <string name="summary_progress">Today: %1$d / %2$d complete</string>
+    <string name="tab_today">Today</string>
+    <string name="tab_practice">Practice</string>
+    <string name="tab_group">Group</string>
+    <string name="tab_stats">Stats</string>
+    <string name="tab_profile">Profile</string>
+    <string name="section_pending">To do</string>
+    <string name="section_completed">Completed</string>
+    <string name="stat_today_label">Today</string>
+    <string name="stat_streak_label">Streak</string>
+    <string name="stat_streak_days">%1$d days</string>
+    <string name="subtitle_checkin">Daily check-in</string>
+    <string name="subtitle_daily_count">Today\'s goal: %1$d</string>
+    <string name="subtitle_daily_minutes">Today\'s goal: %1$d min</string>
+    <string name="subtitle_lifetime">Lifetime vow</string>
+    <string name="subtitle_course">Lesson %1$d / %2$d</string>
+    <string name="progress_not_done">Not done</string>
+    <string name="progress_done">Done</string>
+    <string name="total_recitations">%1$d recitations</string>
+    <string name="manage_practices_title">Practices</string>
+    <string name="coming_soon">Coming soon</string>
+    <string name="edit_name_title">Edit Dharma Name</string>
+    <string name="dharma_name_hint">Dharma name</string>
+    <string name="practice_library_title">Practice Library</string>
+    <string name="category_mantra">Mantras</string>
+    <string name="category_sutra">Sutras</string>
+    <string name="category_prayer">Practices &amp; Prayers</string>
+    <string name="category_ngondro">Ngöndro (Five Preliminaries)</string>
+    <string name="custom_input">Custom Input</string>
+    <string-array name="buddhist_quotes">
+        <item>The present moment is where practice lives.</item>
+        <item>Each recitation is a step on the path.</item>
+        <item>Small daily efforts lead to great awakening.</item>
+        <item>Your practice is your light in the darkness.</item>
+        <item>Return to the breath, return to the practice.</item>
+    </string-array>
+</resources>

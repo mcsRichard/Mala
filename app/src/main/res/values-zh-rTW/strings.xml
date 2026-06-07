@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">念念</string>
+    <string name="create_account_title">建立帳號</string>
+    <string name="email_hint">電子郵件</string>
+    <string name="password_hint">密碼</string>
+    <string name="confirm_password_hint">確認密碼</string>
+    <string name="btn_login">登入</string>
+    <string name="btn_register">建立帳號</string>
+    <string name="btn_logout">登出</string>
+    <string name="text_no_account">沒有帳號？註冊</string>
+    <string name="text_have_account">已有帳號？登入</string>
+    <string name="home_welcome">歡迎</string>
+    <string name="home_title">今日功課</string>
+    <string name="error_password_mismatch">兩次密碼不一致</string>
+    <string name="no_practices">還沒有功課</string>
+    <string name="add_first_practice">新增第一個功課</string>
+    <string name="add_practice_title">新增功課</string>
+    <string name="edit_practice_title">修改功課</string>
+    <string name="practice_name">功課名稱</string>
+    <string name="practice_type">類型</string>
+    <string name="type_chanting">念誦</string>
+    <string name="type_meditation">禪定</string>
+    <string name="type_other">其他</string>
+    <string name="goal_type">目標</string>
+    <string name="goal_count">數量</string>
+    <string name="goal_time">時間</string>
+    <string name="goal_daily_count">每日數量</string>
+    <string name="goal_checkin">每日打卡</string>
+    <string name="goal_lifetime">終生累計</string>
+    <string name="goal_course">課程進度</string>
+    <string name="target_count">目標數量</string>
+    <string name="target_minutes">目標時長（分鐘）</string>
+    <string name="target_count_hint">目標次數</string>
+    <string name="target_lessons_hint">總課數</string>
+    <string name="period_type">週期</string>
+    <string name="period_daily">每日</string>
+    <string name="period_long_term">長期</string>
+    <string name="btn_save">儲存</string>
+    <string name="btn_confirm">確定</string>
+    <string name="btn_cancel">取消</string>
+    <string name="log_amount">輸入完成數量</string>
+    <string name="lang_select">語言</string>
+    <string name="lang_system">跟隨系統</string>
+    <string name="reminder_settings_title">提醒設定</string>
+    <string name="reminder_settings_entry">提醒設定</string>
+    <string name="language_entry">語言設定</string>
+    <string name="morning_reminder">早課提醒</string>
+    <string name="evening_reminder">晚課提醒</string>
+    <string name="change_time">修改</string>
+    <string name="select_time">選擇時間</string>
+    <string name="notif_channel_name">每日功課提醒</string>
+    <string name="notif_channel_desc">每日功課定時提醒</string>
+    <string name="notif_title">功課提醒</string>
+    <string name="notif_permission_note">需要通知權限才能接收提醒，請授予權限。</string>
+    <string name="grant_permission">授予權限</string>
+    <string name="syncing">正在同步資料…</string>
+    <string name="snackbar_logged">記錄成功 ✓</string>
+    <string name="summary_progress">今日：%1$d / %2$d 已完成</string>
+    <string name="tab_today">今日</string>
+    <string name="tab_practice">功課</string>
+    <string name="tab_group">小組</string>
+    <string name="tab_stats">統計</string>
+    <string name="tab_profile">我的</string>
+    <string name="section_pending">待完成</string>
+    <string name="section_completed">已完成</string>
+    <string name="stat_today_label">今日完成</string>
+    <string name="stat_streak_label">連續打卡</string>
+    <string name="stat_streak_days">%1$d 天</string>
+    <string name="subtitle_checkin">每日打卡</string>
+    <string name="subtitle_daily_count">今日目標 %1$d 遍</string>
+    <string name="subtitle_daily_minutes">今日目標 %1$d 分鐘</string>
+    <string name="subtitle_lifetime">終生發願</string>
+    <string name="subtitle_course">第 %1$d 課 / %2$d 課</string>
+    <string name="progress_not_done">未完成</string>
+    <string name="progress_done">完成</string>
+    <string name="total_recitations">累計 %1$d 遍</string>
+    <string name="manage_practices_title">功課管理</string>
+    <string name="coming_soon">敬請期待</string>
+    <string name="edit_name_title">修改法名</string>
+    <string name="dharma_name_hint">法名</string>
+    <string name="practice_library_title">功課庫</string>
+    <string name="category_mantra">心咒類</string>
+    <string name="category_sutra">經文類</string>
+    <string name="category_prayer">修法·祈禱文類</string>
+    <string name="category_ngondro">五加行</string>
+    <string name="custom_input">自定義輸入</string>
+    <string-array name="buddhist_quotes">
+        <item>勤修功課，積累福德</item>
+        <item>每一念，皆是修行</item>
+        <item>持之以恆，必有所成</item>
+        <item>莫忘今日功課，心存正念</item>
+        <item>以精進心，修菩提道</item>
+    </string-array>
+</resources>
