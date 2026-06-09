@@ -1,8 +1,13 @@
 package com.meritminder.app.ui.settings
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -21,9 +26,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -73,6 +80,29 @@ fun ReminderSettingsScreen(
         hasNotifPermission = it
     }
 
+    var canScheduleExact by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+                context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+            else true
+        )
+    }
+    val exactAlarmLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            canScheduleExact = context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
+    }
+
+    var ignoringBatteryOpt by remember {
+        mutableStateOf(
+            context.getSystemService(PowerManager::class.java)
+                .isIgnoringBatteryOptimizations(context.packageName)
+        )
+    }
+    val batteryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        ignoringBatteryOpt = context.getSystemService(PowerManager::class.java)
+            .isIgnoringBatteryOptimizations(context.packageName)
+    }
+
     // null = adding new, non-null = editing existing
     var editingReminder by remember { mutableStateOf<Reminder?>(null) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -105,21 +135,39 @@ fun ReminderSettingsScreen(
 
             if (!hasNotifPermission) {
                 item {
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.notif_permission_note),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            Button(onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    PermissionWarningCard(message = stringResource(R.string.notif_permission_note)) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                            permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            }
+
+            if (!canScheduleExact) {
+                item {
+                    PermissionWarningCard(
+                        message = "未开启精确闹钟权限，提醒时间可能不准确。请前往「闹钟和提醒」授权。"
+                    ) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            exactAlarmLauncher.launch(
+                                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                                    data = Uri.parse("package:${context.packageName}")
                                 }
-                            }) {
-                                Text(stringResource(R.string.grant_permission))
-                            }
+                            )
                         }
+                    }
+                }
+            }
+
+            if (!ignoringBatteryOpt) {
+                item {
+                    PermissionWarningCard(
+                        message = "系统电池优化可能导致提醒无法准时推送（常见于国产手机）。建议关闭本 App 的电池优化。"
+                    ) {
+                        batteryLauncher.launch(
+                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                        )
                     }
                 }
             }
@@ -173,6 +221,36 @@ fun ReminderSettingsScreen(
             },
             onDismiss = { showTimePicker = false }
         )
+    }
+}
+
+@Composable
+private fun PermissionWarningCard(message: String, onAction: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onAction) {
+                Text(stringResource(R.string.grant_permission))
+            }
+        }
     }
 }
 
