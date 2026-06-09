@@ -83,6 +83,7 @@ fun MainScreen(
             Tab.PROFILE -> ProfileScreen(
                 contentPadding = innerPadding,
                 onNavigateToSettings = { navController.navigate("reminder_settings") },
+                onNavigateToTransmissions = { navController.navigate("transmissions") },
                 onLogout = {
                     authViewModel.logout()
                     navController.navigate("login") {

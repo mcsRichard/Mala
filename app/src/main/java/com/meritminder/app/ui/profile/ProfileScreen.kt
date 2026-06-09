@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
@@ -45,6 +47,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -60,13 +63,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.meritminder.app.R
+import com.meritminder.app.data.export.ExportManager
 import com.meritminder.app.ui.settings.LanguageDialog
 import com.meritminder.app.utils.LanguageManager
+import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
     contentPadding: PaddingValues,
     onNavigateToSettings: () -> Unit,
+    onNavigateToTransmissions: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = viewModel()
 ) {
@@ -79,9 +86,29 @@ fun ProfileScreen(
     val initial = displayName.firstOrNull()?.toString() ?: "?"
     val email = FirebaseAuth.getInstance().currentUser?.email ?: ""
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showEditNameDialog by remember { mutableStateOf(false) }
+    var exporting by remember { mutableStateOf(false) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                exporting = true
+                try {
+                    ExportManager.exportToCsv(context, uri)
+                    snackbarHostState.showSnackbar("导出成功")
+                } catch (e: Exception) {
+                    snackbarHostState.showSnackbar("导出失败：${e.message ?: "未知错误"}")
+                } finally {
+                    exporting = false
+                }
+            }
+        }
+    }
 
     val avatarBitmap: ImageBitmap? = remember(avatarBase64) {
         avatarBase64?.let { decodeBase64Bitmap(it) }
@@ -199,6 +226,20 @@ fun ProfileScreen(
 
         Spacer(Modifier.height(36.dp))
 
+        HorizontalDivider()
+        ListItem(
+            headlineContent = { Text("传承灌顶") },
+            leadingContent = { Icon(Icons.Default.AutoStories, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onNavigateToTransmissions)
+        )
+        HorizontalDivider()
+        ListItem(
+            headlineContent = { Text(if (exporting) "导出中…" else "导出全部记录") },
+            leadingContent = { Icon(Icons.Default.Download, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth().clickable(enabled = !exporting) {
+                exportLauncher.launch("mala_export_${LocalDate.now()}.csv")
+            }
+        )
         HorizontalDivider()
         ListItem(
             headlineContent = { Text(stringResource(R.string.reminder_settings_entry)) },

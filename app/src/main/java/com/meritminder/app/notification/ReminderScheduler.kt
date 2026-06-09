@@ -5,20 +5,23 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.meritminder.app.data.local.AppDatabase
+import com.meritminder.app.data.local.entity.Reminder
 import java.util.Calendar
 
 object ReminderScheduler {
 
-    const val REQUEST_MORNING = 100
-    const val REQUEST_EVENING = 101
+    // Legacy fixed request codes from the old morning/evening system
+    private const val LEGACY_MORNING = 100
+    private const val LEGACY_EVENING = 101
 
-    fun schedule(context: Context, requestCode: Int, hour: Int, minute: Int) {
+    fun schedule(context: Context, reminder: Reminder) {
         val alarmManager = context.getSystemService(AlarmManager::class.java)
-        val pending = buildPendingIntent(context, requestCode) ?: return
+        val pending = buildPendingIntent(context, reminder.id) ?: return
 
         val triggerAt = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
+            set(Calendar.HOUR_OF_DAY, reminder.hour)
+            set(Calendar.MINUTE, reminder.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
             if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
@@ -31,25 +34,30 @@ object ReminderScheduler {
         }
     }
 
-    fun cancel(context: Context, requestCode: Int) {
+    fun cancel(context: Context, reminderId: Int) {
         val alarmManager = context.getSystemService(AlarmManager::class.java)
-        buildPendingIntent(context, requestCode, PendingIntent.FLAG_NO_CREATE)
+        buildPendingIntent(context, reminderId, PendingIntent.FLAG_NO_CREATE)
             ?.let { alarmManager.cancel(it) }
     }
 
-    fun rescheduleAll(context: Context) {
-        val prefs = ReminderPreferences(context)
-        if (prefs.morningEnabled) schedule(context, REQUEST_MORNING, prefs.morningHour, prefs.morningMinute)
-        if (prefs.eveningEnabled) schedule(context, REQUEST_EVENING, prefs.eveningHour, prefs.eveningMinute)
+    suspend fun rescheduleAll(context: Context) {
+        // Cancel the old hardcoded morning/evening alarms
+        cancel(context, LEGACY_MORNING)
+        cancel(context, LEGACY_EVENING)
+
+        val db = AppDatabase.getInstance(context)
+        db.reminderDao().getAllSync().forEach { r ->
+            if (r.enabled) schedule(context, r) else cancel(context, r.id)
+        }
     }
 
     private fun buildPendingIntent(
         context: Context,
-        requestCode: Int,
+        reminderId: Int,
         extraFlags: Int = 0
     ): PendingIntent? = PendingIntent.getBroadcast(
-        context, requestCode,
-        Intent(context, ReminderReceiver::class.java).putExtra("request_code", requestCode),
+        context, reminderId,
+        Intent(context, ReminderReceiver::class.java).putExtra("reminder_id", reminderId),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE or extraFlags
     )
 }

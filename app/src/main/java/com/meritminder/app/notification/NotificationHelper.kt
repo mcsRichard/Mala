@@ -13,8 +13,6 @@ import com.meritminder.app.R
 object NotificationHelper {
 
     const val CHANNEL_ID = "mala_reminders"
-    const val ID_MORNING = 1001
-    const val ID_EVENING = 1002
 
     fun createChannel(context: Context) {
         val channel = NotificationChannel(
@@ -28,7 +26,16 @@ object NotificationHelper {
             .createNotificationChannel(channel)
     }
 
-    fun send(context: Context, notifId: Int, title: String, body: String) {
+    fun sendReminder(context: Context, notifId: Int, pendingPractices: List<String>) {
+        val title = if (pendingPractices.isEmpty()) "今日功课已全部完成 ✓" else "修行提醒（还有 ${pendingPractices.size} 项）"
+        val shortText = when {
+            pendingPractices.isEmpty() -> "坚持修行，随喜赞叹！"
+            pendingPractices.size == 1 -> "待完成：${pendingPractices[0]}"
+            else -> "待完成：${pendingPractices.take(2).joinToString("、")}${if (pendingPractices.size > 2) " 等" else ""}"
+        }
+        val longText = if (pendingPractices.isEmpty()) shortText
+        else "待完成：\n" + pendingPractices.joinToString("\n") { "• $it" }
+
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -39,7 +46,8 @@ object NotificationHelper {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(title)
-            .setContentText(body)
+            .setContentText(shortText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(longText))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pending)
             .setAutoCancel(true)

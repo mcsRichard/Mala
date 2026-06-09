@@ -17,6 +17,9 @@ interface DailyRecordDao {
     @Query("SELECT * FROM daily_records WHERE date = :date")
     fun getRecordsForDate(date: String): Flow<List<DailyRecord>>
 
+    @Query("SELECT * FROM daily_records WHERE date = :date")
+    suspend fun getRecordsForDateSync(date: String): List<DailyRecord>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(record: DailyRecord)
 

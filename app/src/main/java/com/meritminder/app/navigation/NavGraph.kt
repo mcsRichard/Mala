@@ -17,6 +17,7 @@ import com.meritminder.app.ui.library.PracticeLibraryScreen
 import com.meritminder.app.ui.main.MainScreen
 import com.meritminder.app.ui.practice.AddPracticeScreen
 import com.meritminder.app.ui.settings.ReminderSettingsScreen
+import com.meritminder.app.ui.transmission.TransmissionScreen
 
 @Composable
 fun AppNavGraph() {
@@ -80,6 +81,9 @@ fun AppNavGraph() {
         }
         composable("reminder_settings") {
             ReminderSettingsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable("transmissions") {
+            TransmissionScreen(onNavigateBack = { navController.popBackStack() })
         }
     }
 }

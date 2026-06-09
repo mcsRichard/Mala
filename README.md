@@ -32,11 +32,24 @@
 ### 统计
 - 连续打卡天数（Streak）
 - 本周每日完成情况（柱状图）
-- 各功课累计数量
+- 各功课累计数量（含限期完成进度条）
+
+### 传承灌顶记录
+- 记录所有已获传承与灌顶
+- 字段：名称、上师、时间、地点、备注（全部必填）
+- 支持添加、编辑、删除
+
+### 数据导出
+- 导出全部记录为 CSV 文件（带 UTF-8 BOM，Excel 可直接打开）
+- 导出内容：功课记录（含目标、累计数）+ 传承灌顶
+- 分 Section 结构，后续新记录类型自动纳入
 
 ### 提醒
-- 自定义早课 / 晚课提醒时间
-- 系统通知推送
+- **无限自定义提醒时间**（不限早课 / 晚课，可添加任意数量）
+- 通知内容智能生成：显示当天尚未完成的功课名称
+  - 有未完成项：`修行提醒（还有 N 项）` + 展开显示完整列表
+  - 全部完成：`今日功课已全部完成 ✓`
+- 设备重启后自动恢复所有提醒
 
 ### 其他
 - 中英文 / 繁简体自动切换
@@ -51,9 +64,9 @@
 | 语言 | Kotlin |
 | UI | Jetpack Compose + Material 3 |
 | 架构 | MVVM + Repository |
-| 本地存储 | Room (SQLite) |
+| 本地存储 | Room (SQLite) v5 |
 | 云端 | Firebase Auth · Firestore |
-| 后台任务 | WorkManager |
+| 后台任务 | AlarmManager + BroadcastReceiver (`goAsync`) |
 | 导航 | Navigation Compose |
 | 异步 | Kotlin Coroutines + Flow |
 
@@ -67,11 +80,14 @@
 ```
 app/src/main/java/com/meritminder/app/
 ├── data/
-│   ├── local/          # Room DB、DAO、Entity
+│   ├── export/         # ExportManager（CSV 导出）
+│   ├── local/          # Room DB v5、DAO、Entity
+│   │   ├── dao/        # PracticeDao, GoalDao, DailyRecordDao, TransmissionDao, ReminderDao
+│   │   └── entity/     # Practice, Goal, DailyRecord, Transmission, Reminder
 │   └── remote/         # FirestoreSync
 ├── data/repository/    # PracticeRepository、AuthRepository
 ├── navigation/         # NavGraph
-├── notification/       # NotificationHelper
+├── notification/       # ReminderScheduler, ReminderReceiver, NotificationHelper, BootReceiver
 ├── ui/
 │   ├── auth/           # 登录 / 注册
 │   ├── counter/        # 计数器
@@ -82,7 +98,8 @@ app/src/main/java/com/meritminder/app/
 │   ├── profile/        # 个人主页
 │   ├── settings/       # 提醒设置
 │   ├── stats/          # 统计
-│   └── theme/          # 主题色
+│   ├── theme/          # 主题色
+│   └── transmission/   # 传承灌顶
 └── utils/              # LanguageManager 等工具
 ```
 

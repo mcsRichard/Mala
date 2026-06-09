@@ -5,7 +5,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,11 +15,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,10 +46,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meritminder.app.R
+import com.meritminder.app.data.local.entity.Reminder
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,15 +60,7 @@ fun ReminderSettingsScreen(
     viewModel: ReminderSettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val morningEnabled by viewModel.morningEnabled.collectAsState()
-    val morningHour by viewModel.morningHour.collectAsState()
-    val morningMinute by viewModel.morningMinute.collectAsState()
-    val eveningEnabled by viewModel.eveningEnabled.collectAsState()
-    val eveningHour by viewModel.eveningHour.collectAsState()
-    val eveningMinute by viewModel.eveningMinute.collectAsState()
-
-    var showMorningPicker by remember { mutableStateOf(false) }
-    var showEveningPicker by remember { mutableStateOf(false) }
+    val reminders by viewModel.reminders.collectAsState()
 
     var hasNotifPermission by remember {
         mutableStateOf(
@@ -71,6 +73,10 @@ fun ReminderSettingsScreen(
         hasNotifPermission = it
     }
 
+    // null = adding new, non-null = editing existing
+    var editingReminder by remember { mutableStateOf<Reminder?>(null) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -81,112 +87,129 @@ fun ReminderSettingsScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { editingReminder = null; showTimePicker = true }) {
+                Icon(Icons.Default.Add, contentDescription = null)
+            }
         }
     ) { padding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Spacer(modifier = Modifier.height(4.dp))
+            item { Spacer(Modifier.height(4.dp)) }
 
             if (!hasNotifPermission) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            stringResource(R.string.notif_permission_note),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                stringResource(R.string.notif_permission_note),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Button(onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    permLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            }) {
+                                Text(stringResource(R.string.grant_permission))
                             }
-                        }) {
-                            Text(stringResource(R.string.grant_permission))
                         }
                     }
                 }
             }
 
-            ReminderCard(
-                title = stringResource(R.string.morning_reminder),
-                enabled = morningEnabled,
-                hour = morningHour,
-                minute = morningMinute,
-                onToggle = { viewModel.setMorningEnabled(it) },
-                onChangeTime = { showMorningPicker = true }
-            )
+            if (reminders.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 60.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                "还没有提醒",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "点击 + 添加提醒时间",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(reminders, key = { it.id }) { reminder ->
+                    ReminderCard(
+                        reminder = reminder,
+                        onEditTime = { editingReminder = reminder; showTimePicker = true },
+                        onToggle = { viewModel.setEnabled(reminder, it) },
+                        onDelete = { viewModel.delete(reminder) }
+                    )
+                }
+            }
 
-            ReminderCard(
-                title = stringResource(R.string.evening_reminder),
-                enabled = eveningEnabled,
-                hour = eveningHour,
-                minute = eveningMinute,
-                onToggle = { viewModel.setEveningEnabled(it) },
-                onChangeTime = { showEveningPicker = true }
-            )
+            item { Spacer(Modifier.height(88.dp)) }
         }
     }
 
-    if (showMorningPicker) {
+    if (showTimePicker) {
+        val initial = editingReminder
         TimePickerDialog(
-            initialHour = morningHour,
-            initialMinute = morningMinute,
+            initialHour = initial?.hour ?: 8,
+            initialMinute = initial?.minute ?: 0,
             onConfirm = { h, m ->
-                viewModel.setMorningTime(h, m)
-                showMorningPicker = false
+                if (initial == null) viewModel.add(h, m)
+                else viewModel.updateTime(initial, h, m)
+                showTimePicker = false
             },
-            onDismiss = { showMorningPicker = false }
-        )
-    }
-
-    if (showEveningPicker) {
-        TimePickerDialog(
-            initialHour = eveningHour,
-            initialMinute = eveningMinute,
-            onConfirm = { h, m ->
-                viewModel.setEveningTime(h, m)
-                showEveningPicker = false
-            },
-            onDismiss = { showEveningPicker = false }
+            onDismiss = { showTimePicker = false }
         )
     }
 }
 
 @Composable
 private fun ReminderCard(
-    title: String,
-    enabled: Boolean,
-    hour: Int,
-    minute: Int,
+    reminder: Reminder,
+    onEditTime: () -> Unit,
     onToggle: (Boolean) -> Unit,
-    onChangeTime: () -> Unit
+    onDelete: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                Switch(checked = enabled, onCheckedChange = onToggle)
-            }
-            if (enabled) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        "%02d:%02d".format(hour, minute),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    TextButton(onClick = onChangeTime) {
-                        Text(stringResource(R.string.change_time))
-                    }
-                }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "%02d:%02d".format(reminder.hour, reminder.minute),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Light,
+                color = if (reminder.enabled) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onEditTime)
+            )
+            Switch(
+                checked = reminder.enabled,
+                onCheckedChange = onToggle
+            )
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -201,7 +224,7 @@ private fun TimePickerDialog(
     onDismiss: () -> Unit
 ) {
     val state = rememberTimePickerState(initialHour = initialHour, initialMinute = initialMinute)
-    androidx.compose.material3.AlertDialog(
+    AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.select_time)) },
         text = { TimePicker(state = state) },

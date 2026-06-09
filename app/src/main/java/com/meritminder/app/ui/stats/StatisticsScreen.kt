@@ -212,8 +212,8 @@ private fun PracticeStatRow(pwg: PracticeWithGoals, total: Long) {
         }
         Spacer(Modifier.width(16.dp))
         if (goal != null) {
-            when (goal.targetType) {
-                Goal.TYPE_CHECKIN -> {
+            when {
+                goal.targetType == Goal.TYPE_CHECKIN -> {
                     Text(
                         text = "打卡 $total 天",
                         style = MaterialTheme.typography.bodyMedium,
@@ -221,10 +221,30 @@ private fun PracticeStatRow(pwg: PracticeWithGoals, total: Long) {
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
-                Goal.TYPE_COURSE -> {
+                goal.targetType == Goal.TYPE_COURSE -> {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "$total / ${goal.targetValue} 课",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        LinearProgressIndicator(
+                            progress = {
+                                if (goal.targetValue > 0)
+                                    (total.toFloat() / goal.targetValue).coerceIn(0f, 1f)
+                                else 0f
+                            },
+                            modifier = Modifier.width(80.dp).padding(top = 4.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    }
+                }
+                goal.deadlineDate != null -> {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "$total / ${goal.targetValue} 遍",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary
@@ -270,6 +290,7 @@ private fun SectionLabel(title: String, topPadding: Boolean = true) {
 private fun goalTypeLabel(goal: Goal): String = when {
     goal.targetType == Goal.TYPE_CHECKIN -> "每日打卡"
     goal.targetType == Goal.TYPE_COURSE -> "课程进度"
+    goal.deadlineDate != null -> "限期完成"
     goal.periodType == Goal.PERIOD_LONG_TERM -> "终生累计"
     else -> "每日数量"
 }
