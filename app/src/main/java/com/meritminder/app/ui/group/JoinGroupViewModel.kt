@@ -71,7 +71,7 @@ class JoinGroupViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     fun join() {
         viewModelScope.launch {
             try {
-                val personal = if (needsPersonalTarget) _targetValue.value.toLongOrNull() ?: 0L else 0L
+                val personal = if (_group.value?.targetType == Group.TYPE_TOTAL) _targetValue.value.toLongOrNull() ?: 0L else 0L
                 repo.joinGroup(groupId, personal)
                 _joined.value = true
             } catch (e: Exception) {
