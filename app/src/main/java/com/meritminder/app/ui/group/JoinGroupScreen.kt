@@ -36,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.meritminder.app.data.remote.Group
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,6 +114,8 @@ fun JoinGroupScreen(
                             }
                         }
                         Spacer(Modifier.height(8.dp))
+                        // Derive from observed state so recomposition fires after load
+                        val needsPersonalTarget = g.targetType == Group.TYPE_TOTAL
                         if (alreadyMember) {
                             Text(
                                 "你已经是该小组成员",
@@ -123,7 +126,7 @@ fun JoinGroupScreen(
                                 modifier = Modifier.fillMaxWidth().height(50.dp)
                             ) { Text("前往小组") }
                         } else {
-                            if (viewModel.needsPersonalTarget) {
+                            if (needsPersonalTarget) {
                                 OutlinedTextField(
                                     value = targetValue,
                                     onValueChange = { viewModel.setTargetValue(it) },
@@ -137,7 +140,7 @@ fun JoinGroupScreen(
                             Button(
                                 onClick = { viewModel.join() },
                                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                                enabled = !viewModel.needsPersonalTarget ||
+                                enabled = !needsPersonalTarget ||
                                     (targetValue.toLongOrNull() ?: 0L) > 0L
                             ) { Text("确认加入") }
                         }

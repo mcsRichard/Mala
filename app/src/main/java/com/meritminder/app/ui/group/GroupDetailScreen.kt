@@ -72,6 +72,7 @@ fun GroupDetailScreen(
 
     var showCheckInDialog by remember { mutableStateOf(false) }
     var showEditGoalDialog by remember { mutableStateOf(false) }
+    var showMyTargetDialog by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showLeaveConfirm by remember { mutableStateOf(false) }
 
@@ -151,7 +152,8 @@ fun GroupDetailScreen(
                     CheckInCard(
                         group = g,
                         me = me,
-                        onCheckIn = { showCheckInDialog = true }
+                        onCheckIn = { showCheckInDialog = true },
+                        onEditMyTarget = { showMyTargetDialog = true }
                     )
                 }
 
@@ -181,6 +183,17 @@ fun GroupDetailScreen(
                 showCheckInDialog = false
             },
             onDismiss = { showCheckInDialog = false }
+        )
+    }
+
+    if (showMyTargetDialog) {
+        EditMyTargetDialog(
+            current = viewModel.myMember?.targetValue ?: 0L,
+            onConfirm = { value ->
+                viewModel.updateMyTarget(value)
+                showMyTargetDialog = false
+            },
+            onDismiss = { showMyTargetDialog = false }
         )
     }
 
@@ -269,7 +282,7 @@ private fun GroupInfoCard(group: Group, memberCount: Int) {
 }
 
 @Composable
-private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
+private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit, onEditMyTarget: () -> Unit) {
     val doneToday = me?.doneToday == true
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -281,20 +294,40 @@ private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
             if (group.targetType == Group.TYPE_TOTAL) {
                 val total = me?.total ?: 0L
                 val myTarget = me?.targetValue ?: 0L
-                val fraction = if (myTarget > 0)
-                    (total.toFloat() / myTarget).coerceIn(0f, 1f) else 0f
-                Text(
-                    "我的进度：$total / $myTarget",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Spacer(Modifier.height(8.dp))
-                LinearProgressIndicator(
-                    progress = { fraction },
+                // Target row with edit button
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.primary,
-                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (myTarget > 0) "我的目标：$myTarget 遍" else "尚未设置目标",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.weight(1f),
+                        color = if (myTarget > 0) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.error
+                    )
+                    IconButton(onClick = onEditMyTarget, modifier = Modifier.size(32.dp)) {
+                        Icon(Icons.Default.Edit, contentDescription = "修改目标",
+                            modifier = Modifier.size(18.dp))
+                    }
+                }
+                if (myTarget > 0) {
+                    val fraction = (total.toFloat() / myTarget).coerceIn(0f, 1f)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "累计进度：$total / $myTarget",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(
+                        progress = { fraction },
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
                 Spacer(Modifier.height(12.dp))
                 Button(onClick = onCheckIn, modifier = Modifier.fillMaxWidth()) {
                     Text(if (doneToday) "继续记录" else "今日打卡")
@@ -439,6 +472,38 @@ private fun EditGoalDialog(
             TextButton(
                 onClick = { onConfirm(Group.TYPE_CHECKIN, targetValue.toLongOrNull() ?: 0L) },
                 enabled = isValid
+            ) { Text("保存") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
+        }
+    )
+}
+
+@Composable
+private fun EditMyTargetDialog(
+    current: Long,
+    onConfirm: (Long) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var value by rememberSaveable { mutableStateOf(if (current > 0) current.toString() else "") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("设置我的目标") },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it.filter { c -> c.isDigit() } },
+                label = { Text("我的总目标数量（遍）") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(value.toLongOrNull() ?: 0L) },
+                enabled = (value.toLongOrNull() ?: 0L) > 0L
             ) { Text("保存") }
         },
         dismissButton = {

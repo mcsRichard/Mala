@@ -43,9 +43,6 @@ class JoinGroupViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     fun setTargetValue(v: String) { _targetValue.value = v.filter { it.isDigit() } }
 
-    val needsPersonalTarget: Boolean
-        get() = _group.value?.targetType == Group.TYPE_TOTAL
-
     init {
         load()
     }

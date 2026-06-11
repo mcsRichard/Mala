@@ -212,6 +212,11 @@ class GroupRepository {
 
     // ── 打卡 ──────────────────────────────────────────────────────────────
 
+    suspend fun updateMemberTarget(groupId: String, targetValue: Long) {
+        groupDoc(groupId).collection("members").document(uid)
+            .update("targetValue", targetValue).await()
+    }
+
     /** value: 打卡类型传 1，总目标类型传本次完成数量（累加） */
     suspend fun checkIn(groupId: String, value: Long) {
         val todayStr = today()

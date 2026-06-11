@@ -72,6 +72,21 @@ class GroupDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         }
     }
 
+    fun updateMyTarget(targetValue: Long) {
+        viewModelScope.launch {
+            try {
+                repo.updateMemberTarget(groupId, targetValue)
+                val g = _group.value
+                _members.value = if (g != null)
+                    repo.getMembers(groupId, g.targetType, g.targetValue)
+                else
+                    repo.getMembers(groupId)
+            } catch (e: Exception) {
+                _error.value = e.message ?: "更新失败"
+            }
+        }
+    }
+
     fun updateGoal(targetType: String, targetValue: Long) {
         viewModelScope.launch {
             try {
