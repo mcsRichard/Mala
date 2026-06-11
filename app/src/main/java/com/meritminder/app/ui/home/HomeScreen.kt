@@ -641,19 +641,20 @@ private fun GroupPracticeRow(status: GroupStatus, onCheckIn: () -> Unit) {
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             } else {
-                if (doneToday) {
-                    Text(
-                        text = "今日 ${status.myTodayValue} 遍",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = DoneGreen
-                    )
-                } else {
-                    Text(
-                        text = "未记录",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                val fraction = if (status.group.targetValue > 0)
+                    (status.myTodayValue.toFloat() / status.group.targetValue).coerceIn(0f, 1f) else 0f
+                Text(
+                    text = "${status.myTodayValue} / ${status.group.targetValue}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (doneToday) DoneGreen else MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(4.dp))
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier.width(60.dp),
+                    color = if (doneToday) DoneGreen else MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
             }
         }
     }

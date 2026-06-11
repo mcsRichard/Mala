@@ -46,8 +46,9 @@ class GroupDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         viewModelScope.launch {
             _loading.value = true
             try {
-                _group.value = repo.getGroup(groupId)
-                _members.value = repo.getMembers(groupId)
+                val g = repo.getGroup(groupId)
+                _group.value = g
+                if (g != null) _members.value = repo.getMembers(groupId, g.targetType, g.targetValue)
             } catch (e: Exception) {
                 _error.value = e.message ?: "加载失败"
             } finally {
@@ -60,7 +61,11 @@ class GroupDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         viewModelScope.launch {
             try {
                 repo.checkIn(groupId, value)
-                _members.value = repo.getMembers(groupId)
+                val g = _group.value
+                _members.value = if (g != null)
+                    repo.getMembers(groupId, g.targetType, g.targetValue)
+                else
+                    repo.getMembers(groupId)
             } catch (e: Exception) {
                 _error.value = e.message ?: "打卡失败"
             }

@@ -299,17 +299,24 @@ private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
                     Text(if (doneToday) "继续记录" else "今日打卡")
                 }
             } else {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            if (doneToday) "今日已记录 ${me?.todayValue} 遍 🙏" else "今日还未记录",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                    Button(onClick = onCheckIn) {
-                        Text(if (doneToday) "继续记录" else "记录")
-                    }
+                val todayValue = me?.todayValue ?: 0L
+                val fraction = if (group.targetValue > 0)
+                    (todayValue.toFloat() / group.targetValue).coerceIn(0f, 1f) else 0f
+                Text(
+                    "今日进度：$todayValue / ${group.targetValue}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                Button(onClick = onCheckIn, modifier = Modifier.fillMaxWidth()) {
+                    Text(if (doneToday) "继续记录" else "记录")
                 }
             }
         }
@@ -397,7 +404,10 @@ private fun EditGoalDialog(
     var targetValue by rememberSaveable { mutableStateOf(
         if (group.targetValue > 0) group.targetValue.toString() else ""
     ) }
-    val isValid = targetType == Group.TYPE_CHECKIN || (targetValue.toLongOrNull() ?: 0L) > 0L
+    val isValid = (targetValue.toLongOrNull() ?: 0L) > 0L
+
+    val quantityLabel = if (targetType == Group.TYPE_CHECKIN) "每人每日目标数量（遍）"
+                        else "每人总目标数量（遍）"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -407,35 +417,28 @@ private fun EditGoalDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = targetType == Group.TYPE_CHECKIN,
-                        onClick = { targetType = Group.TYPE_CHECKIN },
+                        onClick = { targetType = Group.TYPE_CHECKIN; targetValue = "" },
                         label = { Text("当日完成") }
                     )
                     FilterChip(
                         selected = targetType == Group.TYPE_TOTAL,
-                        onClick = { targetType = Group.TYPE_TOTAL },
+                        onClick = { targetType = Group.TYPE_TOTAL; targetValue = "" },
                         label = { Text("总目标") }
                     )
                 }
-                if (targetType == Group.TYPE_TOTAL) {
-                    OutlinedTextField(
-                        value = targetValue,
-                        onValueChange = { targetValue = it.filter { c -> c.isDigit() } },
-                        label = { Text("每人总目标数量（遍）") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                }
+                OutlinedTextField(
+                    value = targetValue,
+                    onValueChange = { targetValue = it.filter { c -> c.isDigit() } },
+                    label = { Text(quantityLabel) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
             }
         },
         confirmButton = {
             TextButton(
-                onClick = {
-                    onConfirm(
-                        targetType,
-                        if (targetType == Group.TYPE_TOTAL) targetValue.toLongOrNull() ?: 0L else 0L
-                    )
-                },
+                onClick = { onConfirm(targetType, targetValue.toLongOrNull() ?: 0L) },
                 enabled = isValid
             ) { Text("保存") }
         },

@@ -107,7 +107,11 @@ class GroupRepository {
         )
     }
 
-    suspend fun getMembers(groupId: String): List<GroupMember> {
+    suspend fun getMembers(
+        groupId: String,
+        targetType: String = Group.TYPE_CHECKIN,
+        targetValue: Long = 0L
+    ): List<GroupMember> {
         val todayStr = today()
         val memberDocs = groupDoc(groupId).collection("members").get().await()
         val checkinDocs = groupDoc(groupId).collection("checkins")
@@ -116,13 +120,15 @@ class GroupRepository {
             (it.getString("userId") ?: "") to (it.getLong("value") ?: 0L)
         }
         return memberDocs.documents.map { d ->
-            val todayValue = todayMap[d.id] ?: 0L
+            val todayVal = todayMap[d.id] ?: 0L
+            val doneToday = if (targetType == Group.TYPE_CHECKIN && targetValue > 0)
+                todayVal >= targetValue else todayVal > 0L
             GroupMember(
                 userId = d.id,
                 displayName = d.getString("displayName") ?: "",
                 total = d.getLong("total") ?: 0L,
-                doneToday = todayValue > 0L,
-                todayValue = todayValue
+                doneToday = doneToday,
+                todayValue = todayVal
             )
         }.sortedByDescending { it.total }
     }
@@ -141,7 +147,7 @@ class GroupRepository {
                 p.reference.delete()
                 return@mapNotNull null
             }
-            val members = getMembers(p.id)
+            val members = getMembers(p.id, group.targetType, group.targetValue)
             val me = members.find { it.userId == uid }
             GroupStatus(
                 group = group,

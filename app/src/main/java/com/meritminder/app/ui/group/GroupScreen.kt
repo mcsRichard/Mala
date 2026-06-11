@@ -223,7 +223,10 @@ fun CreateGroupDialog(
     var targetValue by rememberSaveable { mutableStateOf("") }
 
     val isValid = name.isNotBlank() && practiceName.isNotBlank() &&
-        (targetType == Group.TYPE_CHECKIN || (targetValue.toLongOrNull() ?: 0L) > 0L)
+        (targetValue.toLongOrNull() ?: 0L) > 0L
+
+    val quantityLabel = if (targetType == Group.TYPE_CHECKIN) "每人每日目标数量（遍）*"
+                        else "每人总目标数量（遍）*"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -250,35 +253,30 @@ fun CreateGroupDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         FilterChip(
                             selected = targetType == Group.TYPE_CHECKIN,
-                            onClick = { targetType = Group.TYPE_CHECKIN },
+                            onClick = { targetType = Group.TYPE_CHECKIN; targetValue = "" },
                             label = { Text("当日完成") }
                         )
                         FilterChip(
                             selected = targetType == Group.TYPE_TOTAL,
-                            onClick = { targetType = Group.TYPE_TOTAL },
+                            onClick = { targetType = Group.TYPE_TOTAL; targetValue = "" },
                             label = { Text("总目标") }
                         )
                     }
                 }
-                if (targetType == Group.TYPE_TOTAL) {
-                    OutlinedTextField(
-                        value = targetValue,
-                        onValueChange = { targetValue = it.filter { c -> c.isDigit() } },
-                        label = { Text("每人总目标数量（遍）*") },
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                }
+                OutlinedTextField(
+                    value = targetValue,
+                    onValueChange = { targetValue = it.filter { c -> c.isDigit() } },
+                    label = { Text(quantityLabel) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    onCreate(
-                        name.trim(), practiceName.trim(), targetType,
-                        if (targetType == Group.TYPE_TOTAL) targetValue.toLongOrNull() ?: 0L else 0L
-                    )
+                    onCreate(name.trim(), practiceName.trim(), targetType, targetValue.toLongOrNull() ?: 0L)
                 },
                 enabled = isValid
             ) { Text("创建") }
