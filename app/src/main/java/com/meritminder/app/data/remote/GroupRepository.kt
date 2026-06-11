@@ -27,6 +27,7 @@ data class GroupMember(
     val userId: String = "",
     val displayName: String = "",
     val total: Long = 0L,
+    val targetValue: Long = 0L,
     val doneToday: Boolean = false,
     val todayValue: Long = 0L
 )
@@ -38,7 +39,8 @@ data class GroupStatus(
     val todayDoneCount: Int,
     val myDoneToday: Boolean,
     val myTotal: Long,
-    val myTodayValue: Long = 0L
+    val myTodayValue: Long = 0L,
+    val myTargetValue: Long = 0L
 )
 
 class GroupRepository {
@@ -70,18 +72,22 @@ class GroupRepository {
             if (!groupDoc(code).get().await().exists()) return@repeat
             code = generateCode()
         }
+        // For TYPE_CHECKIN, targetValue is the shared daily target (same for all members).
+        // For TYPE_TOTAL, each member sets their own target; group doc stores 0.
+        val groupTarget = if (targetType == Group.TYPE_CHECKIN) targetValue else 0L
         groupDoc(code).set(
             mapOf(
                 "name" to name,
                 "practiceName" to practiceName,
                 "targetType" to targetType,
-                "targetValue" to targetValue,
+                "targetValue" to groupTarget,
                 "creatorId" to uid,
                 "creatorName" to myName,
                 "createdAt" to System.currentTimeMillis()
             )
         ).await()
-        addMembership(code)
+        // Admin's personal target stored in their member doc (relevant for TYPE_TOTAL)
+        addMembership(code, if (targetType == Group.TYPE_TOTAL) targetValue else 0L)
         return code
     }
 
@@ -121,12 +127,14 @@ class GroupRepository {
         }
         return memberDocs.documents.map { d ->
             val todayVal = todayMap[d.id] ?: 0L
+            val memberTarget = d.getLong("targetValue") ?: 0L
             val doneToday = if (targetType == Group.TYPE_CHECKIN && targetValue > 0)
                 todayVal >= targetValue else todayVal > 0L
             GroupMember(
                 userId = d.id,
                 displayName = d.getString("displayName") ?: "",
                 total = d.getLong("total") ?: 0L,
+                targetValue = memberTarget,
                 doneToday = doneToday,
                 todayValue = todayVal
             )
@@ -155,23 +163,25 @@ class GroupRepository {
                 todayDoneCount = members.count { it.doneToday },
                 myDoneToday = me?.doneToday == true,
                 myTotal = me?.total ?: 0L,
-                myTodayValue = me?.todayValue ?: 0L
+                myTodayValue = me?.todayValue ?: 0L,
+                myTargetValue = me?.targetValue ?: 0L
             )
         }
     }
 
     // ── 加入 / 退出 ───────────────────────────────────────────────────────
 
-    suspend fun joinGroup(groupId: String) {
-        addMembership(groupId)
+    suspend fun joinGroup(groupId: String, targetValue: Long = 0L) {
+        addMembership(groupId, targetValue)
     }
 
-    private suspend fun addMembership(groupId: String) {
+    private suspend fun addMembership(groupId: String, targetValue: Long = 0L) {
         groupDoc(groupId).collection("members").document(uid).set(
             mapOf(
                 "displayName" to myName,
                 "joinedAt" to System.currentTimeMillis(),
-                "total" to 0L
+                "total" to 0L,
+                "targetValue" to targetValue
             ),
             SetOptions.merge()
         ).await()

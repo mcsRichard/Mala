@@ -226,7 +226,7 @@ fun CreateGroupDialog(
         (targetValue.toLongOrNull() ?: 0L) > 0L
 
     val quantityLabel = if (targetType == Group.TYPE_CHECKIN) "每人每日目标数量（遍）*"
-                        else "每人总目标数量（遍）*"
+                        else "我的总目标数量（遍）*"
 
     AlertDialog(
         onDismissRequest = onDismiss,

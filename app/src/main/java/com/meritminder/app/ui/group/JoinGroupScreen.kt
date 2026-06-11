@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -20,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -30,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -48,6 +51,7 @@ fun JoinGroupScreen(
     val notFound by viewModel.notFound.collectAsState()
     val joined by viewModel.joined.collectAsState()
     val error by viewModel.error.collectAsState()
+    val targetValue by viewModel.targetValue.collectAsState()
 
     LaunchedEffect(joined) { if (joined) onJoined() }
 
@@ -119,9 +123,22 @@ fun JoinGroupScreen(
                                 modifier = Modifier.fillMaxWidth().height(50.dp)
                             ) { Text("前往小组") }
                         } else {
+                            if (viewModel.needsPersonalTarget) {
+                                OutlinedTextField(
+                                    value = targetValue,
+                                    onValueChange = { viewModel.setTargetValue(it) },
+                                    label = { Text("我的总目标数量（遍）*") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    singleLine = true
+                                )
+                                Spacer(Modifier.height(8.dp))
+                            }
                             Button(
                                 onClick = { viewModel.join() },
-                                modifier = Modifier.fillMaxWidth().height(50.dp)
+                                modifier = Modifier.fillMaxWidth().height(50.dp),
+                                enabled = !viewModel.needsPersonalTarget ||
+                                    (targetValue.toLongOrNull() ?: 0L) > 0L
                             ) { Text("确认加入") }
                         }
                     }

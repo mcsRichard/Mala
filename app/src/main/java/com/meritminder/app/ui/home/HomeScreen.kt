@@ -626,10 +626,10 @@ private fun GroupPracticeRow(status: GroupStatus, onCheckIn: () -> Unit) {
         Spacer(Modifier.width(12.dp))
         Column(horizontalAlignment = Alignment.End) {
             if (status.group.targetType == Group.TYPE_TOTAL) {
-                val fraction = if (status.group.targetValue > 0)
-                    (status.myTotal.toFloat() / status.group.targetValue).coerceIn(0f, 1f) else 0f
+                val fraction = if (status.myTargetValue > 0)
+                    (status.myTotal.toFloat() / status.myTargetValue).coerceIn(0f, 1f) else 0f
                 Text(
-                    text = "${status.myTotal} / ${status.group.targetValue}",
+                    text = "${status.myTotal} / ${status.myTargetValue}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary
                 )

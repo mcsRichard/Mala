@@ -30,7 +30,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -100,7 +99,7 @@ fun GroupDetailScreen(
                     }) {
                         Icon(Icons.Default.Share, contentDescription = "分享")
                     }
-                    if (viewModel.isAdmin) {
+                    if (viewModel.isAdmin && group?.targetType == Group.TYPE_CHECKIN) {
                         IconButton(onClick = { showEditGoalDialog = true }) {
                             Icon(Icons.Default.Edit, contentDescription = "修改目标")
                         }
@@ -166,7 +165,7 @@ fun GroupDetailScreen(
                 }
 
                 items(members, key = { it.userId }) { member ->
-                    MemberRow(member = member)
+                    MemberRow(member = member, group = g)
                     HorizontalDivider()
                 }
 
@@ -230,10 +229,11 @@ fun GroupDetailScreen(
 }
 
 private fun shareGroup(context: android.content.Context, group: Group) {
+    val link = "https://mcsrichard.github.io/Mala/join.html?code=${group.id}"
     val text = "邀请你加入共修小组「${group.name}」\n" +
         "功课：${group.practiceName}（${GroupViewModel.goalLabel(group)}）\n\n" +
-        "点击链接加入：mala://group/${group.id}\n" +
-        "或在 Mala App「小组」页输入编号：${group.id}"
+        "点击链接加入：$link\n" +
+        "（微信用户请在浏览器中打开，或手动输入编号：${group.id}）"
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)
@@ -280,10 +280,11 @@ private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             if (group.targetType == Group.TYPE_TOTAL) {
                 val total = me?.total ?: 0L
-                val fraction = if (group.targetValue > 0)
-                    (total.toFloat() / group.targetValue).coerceIn(0f, 1f) else 0f
+                val myTarget = me?.targetValue ?: 0L
+                val fraction = if (myTarget > 0)
+                    (total.toFloat() / myTarget).coerceIn(0f, 1f) else 0f
                 Text(
-                    "我的进度：$total / ${group.targetValue}",
+                    "我的进度：$total / $myTarget",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -324,7 +325,7 @@ private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
 }
 
 @Composable
-private fun MemberRow(member: GroupMember) {
+private fun MemberRow(member: GroupMember, group: Group) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -347,18 +348,34 @@ private fun MemberRow(member: GroupMember) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                "${member.total}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                "累计",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        if (group.targetType == Group.TYPE_TOTAL && member.targetValue > 0) {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "${member.total} / ${member.targetValue}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "累计",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "${member.total}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "累计",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -400,45 +417,27 @@ private fun EditGoalDialog(
     onConfirm: (String, Long) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var targetType by rememberSaveable { mutableStateOf(group.targetType) }
     var targetValue by rememberSaveable { mutableStateOf(
         if (group.targetValue > 0) group.targetValue.toString() else ""
     ) }
     val isValid = (targetValue.toLongOrNull() ?: 0L) > 0L
 
-    val quantityLabel = if (targetType == Group.TYPE_CHECKIN) "每人每日目标数量（遍）"
-                        else "每人总目标数量（遍）"
-
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("修改功课目标") },
+        title = { Text("修改每日目标") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = targetType == Group.TYPE_CHECKIN,
-                        onClick = { targetType = Group.TYPE_CHECKIN; targetValue = "" },
-                        label = { Text("当日完成") }
-                    )
-                    FilterChip(
-                        selected = targetType == Group.TYPE_TOTAL,
-                        onClick = { targetType = Group.TYPE_TOTAL; targetValue = "" },
-                        label = { Text("总目标") }
-                    )
-                }
-                OutlinedTextField(
-                    value = targetValue,
-                    onValueChange = { targetValue = it.filter { c -> c.isDigit() } },
-                    label = { Text(quantityLabel) },
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true
-                )
-            }
+            OutlinedTextField(
+                value = targetValue,
+                onValueChange = { targetValue = it.filter { c -> c.isDigit() } },
+                label = { Text("每人每日目标数量（遍）") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
         },
         confirmButton = {
             TextButton(
-                onClick = { onConfirm(targetType, targetValue.toLongOrNull() ?: 0L) },
+                onClick = { onConfirm(Group.TYPE_CHECKIN, targetValue.toLongOrNull() ?: 0L) },
                 enabled = isValid
             ) { Text("保存") }
         },

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>加入共修小组 - Mala</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: center;
+      padding: 48px 24px;
+      max-width: 420px;
+      margin: 0 auto;
+      background: #FFFBFE;
+      color: #1C1B1F;
+    }
+    h2 { font-size: 22px; margin-bottom: 8px; }
+    .subtitle { color: #49454F; margin-bottom: 32px; font-size: 14px; }
+    .code-box {
+      background: #F3EDF7;
+      border-radius: 16px;
+      padding: 24px 32px;
+      margin: 0 auto 32px;
+    }
+    .code-label { font-size: 13px; color: #6750A4; margin-bottom: 8px; }
+    .code {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 10px;
+      color: #6750A4;
+    }
+    .btn {
+      display: block;
+      background: #6750A4;
+      color: #fff;
+      padding: 16px 32px;
+      border-radius: 24px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      cursor: pointer;
+      border: none;
+      width: 100%;
+    }
+    .hint { color: #79747E; font-size: 13px; line-height: 1.6; margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <h2>共修小组邀请</h2>
+  <p class="subtitle">点击下方按钮，在 Mala 应用中加入小组</p>
+
+  <div class="code-box">
+    <div class="code-label">小组编号</div>
+    <div class="code" id="code-display">——</div>
+  </div>
+
+  <button class="btn" onclick="openApp()">打开 Mala 应用加入</button>
+
+  <p class="hint">
+    若按钮无法打开，请在手机浏览器（而非微信内置浏览器）中打开此链接。<br><br>
+    或在 Mala App「小组」页手动输入以上编号加入。
+  </p>
+
+  <script>
+    const code = new URLSearchParams(location.search).get('code') || '';
+    if (code) document.getElementById('code-display').textContent = code;
+
+    function openApp() {
+      if (!code) return;
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      if (isAndroid) {
+        // intent:// is handled directly by Android Chrome → opens the app if installed
+        location.href = 'intent://group/' + code +
+          '#Intent;scheme=mala;package=com.meritminder.app;end';
+      } else {
+        location.href = 'mala://group/' + code;
+      }
+    }
+
+    // Auto-attempt on Android after a short delay
+    if (/Android/i.test(navigator.userAgent) && code) {
+      setTimeout(openApp, 600);
+    }
+  </script>
+</body>
+</html>

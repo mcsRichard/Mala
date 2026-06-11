@@ -60,7 +60,7 @@ class GroupViewModel : ViewModel() {
 
     companion object {
         fun goalLabel(group: Group): String = when (group.targetType) {
-            Group.TYPE_TOTAL -> "总目标 ${group.targetValue} 遍"
+            Group.TYPE_TOTAL -> "个人总目标"
             else -> "每日 ${group.targetValue} 遍"
         }
     }

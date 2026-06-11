@@ -330,15 +330,15 @@ private fun GroupStatRow(status: GroupStatus) {
         if (status.group.targetType == Group.TYPE_TOTAL) {
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = "${status.myTotal} / ${status.group.targetValue} 遍",
+                    text = "${status.myTotal} / ${status.myTargetValue} 遍",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 LinearProgressIndicator(
                     progress = {
-                        if (status.group.targetValue > 0)
-                            (status.myTotal.toFloat() / status.group.targetValue).coerceIn(0f, 1f)
+                        if (status.myTargetValue > 0)
+                            (status.myTotal.toFloat() / status.myTargetValue).coerceIn(0f, 1f)
                         else 0f
                     },
                     modifier = Modifier.width(80.dp).padding(top = 4.dp),

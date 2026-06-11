@@ -38,6 +38,14 @@ class JoinGroupViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val _targetValue = MutableStateFlow("")
+    val targetValue: StateFlow<String> = _targetValue.asStateFlow()
+
+    fun setTargetValue(v: String) { _targetValue.value = v.filter { it.isDigit() } }
+
+    val needsPersonalTarget: Boolean
+        get() = _group.value?.targetType == Group.TYPE_TOTAL
+
     init {
         load()
     }
@@ -52,7 +60,7 @@ class JoinGroupViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
                     _notFound.value = true
                 } else {
                     _group.value = g
-                    _memberCount.value = repo.getMembers(groupId).size
+                    _memberCount.value = repo.getMembers(groupId, g.targetType, g.targetValue).size
                     _alreadyMember.value = repo.isMember(groupId)
                 }
             } catch (e: Exception) {
@@ -66,7 +74,8 @@ class JoinGroupViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     fun join() {
         viewModelScope.launch {
             try {
-                repo.joinGroup(groupId)
+                val personal = if (needsPersonalTarget) _targetValue.value.toLongOrNull() ?: 0L else 0L
+                repo.joinGroup(groupId, personal)
                 _joined.value = true
             } catch (e: Exception) {
                 _error.value = e.message ?: "加入失败"
