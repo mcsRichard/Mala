@@ -143,10 +143,7 @@ fun GroupDetailScreen(
                     CheckInCard(
                         group = g,
                         me = me,
-                        onCheckIn = {
-                            if (g.targetType == Group.TYPE_CHECKIN) viewModel.checkIn(1L)
-                            else showCheckInDialog = true
-                        }
+                        onCheckIn = { showCheckInDialog = true }
                     )
                 }
 
@@ -160,7 +157,7 @@ fun GroupDetailScreen(
                 }
 
                 items(members, key = { it.userId }) { member ->
-                    MemberRow(member = member, group = g)
+                    MemberRow(member = member)
                     HorizontalDivider()
                 }
 
@@ -294,14 +291,15 @@ private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
                 }
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        if (doneToday) "今日已完成 🙏" else "今日还未打卡",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Button(onClick = onCheckIn, enabled = !doneToday) {
-                        Text(if (doneToday) "已打卡" else "打卡")
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            if (doneToday) "今日已记录 ${me?.todayValue} 遍 🙏" else "今日还未记录",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Button(onClick = onCheckIn) {
+                        Text(if (doneToday) "继续记录" else "记录")
                     }
                 }
             }
@@ -310,7 +308,7 @@ private fun CheckInCard(group: Group, me: GroupMember?, onCheckIn: () -> Unit) {
 }
 
 @Composable
-private fun MemberRow(member: GroupMember, group: Group) {
+private fun MemberRow(member: GroupMember) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -333,24 +331,16 @@ private fun MemberRow(member: GroupMember, group: Group) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        if (group.targetType == Group.TYPE_TOTAL) {
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    "${member.total}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    "累计",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
+        Column(horizontalAlignment = Alignment.End) {
             Text(
-                "累计 ${member.total} 天",
-                style = MaterialTheme.typography.bodySmall,
+                "${member.total}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                "累计",
+                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

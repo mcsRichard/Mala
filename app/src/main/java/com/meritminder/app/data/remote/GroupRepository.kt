@@ -37,7 +37,8 @@ data class GroupStatus(
     val memberCount: Int,
     val todayDoneCount: Int,
     val myDoneToday: Boolean,
-    val myTotal: Long
+    val myTotal: Long,
+    val myTodayValue: Long = 0L
 )
 
 class GroupRepository {
@@ -147,7 +148,8 @@ class GroupRepository {
                 memberCount = members.size,
                 todayDoneCount = members.count { it.doneToday },
                 myDoneToday = me?.doneToday == true,
-                myTotal = me?.total ?: 0L
+                myTotal = me?.total ?: 0L,
+                myTodayValue = me?.todayValue ?: 0L
             )
         }
     }

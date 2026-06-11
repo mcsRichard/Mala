@@ -8,12 +8,17 @@ import com.meritminder.app.data.local.AppDatabase
 import com.meritminder.app.data.local.entity.DailyRecord
 import com.meritminder.app.data.local.entity.Goal
 import com.meritminder.app.data.local.entity.PracticeWithGoals
+import com.meritminder.app.data.remote.GroupRepository
+import com.meritminder.app.data.remote.GroupStatus
 import com.meritminder.app.data.repository.PracticeRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -30,8 +35,18 @@ class StatisticsViewModel(application: Application) : AndroidViewModel(applicati
 
     private val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private val repo = PracticeRepository(AppDatabase.getInstance(application), userId)
+    private val groupRepo = GroupRepository()
     private val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    private val _groupStatuses = MutableStateFlow<List<GroupStatus>>(emptyList())
+    val groupStatuses: StateFlow<List<GroupStatus>> = _groupStatuses.asStateFlow()
     private val chineseDay = "一二三四五六日"
+
+    init {
+        viewModelScope.launch {
+            try { _groupStatuses.value = groupRepo.getMyGroups() } catch (_: Exception) {}
+        }
+    }
 
     val practicesWithGoals: StateFlow<List<PracticeWithGoals>> =
         repo.getPracticesWithGoals(userId)

@@ -60,6 +60,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.meritminder.app.R
 import com.meritminder.app.data.local.entity.Goal
 import com.meritminder.app.data.local.entity.PracticeWithGoals
+import com.meritminder.app.data.remote.Group
+import com.meritminder.app.data.remote.GroupStatus
 import com.meritminder.app.ui.theme.DoneGreen
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -81,7 +83,9 @@ fun HomeScreen(
     val summary by viewModel.todaySummary.collectAsState()
     val streak by viewModel.streak.collectAsState()
     val syncing by viewModel.syncing.collectAsState()
+    val groupStatuses by viewModel.groupStatuses.collectAsState()
     var logDialogTarget by remember { mutableStateOf<PracticeWithGoals?>(null) }
+    var checkInGroupTarget by remember { mutableStateOf<GroupStatus?>(null) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -208,6 +212,20 @@ fun HomeScreen(
                 )
             }
         }
+
+        if (groupStatuses.isNotEmpty()) {
+            item { SectionHeader("共修功课") }
+            items(groupStatuses, key = { "group_${it.group.id}" }) { status ->
+                GroupPracticeRow(
+                    status = status,
+                    onCheckIn = { checkInGroupTarget = status }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 60.dp, end = 20.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                )
+            }
+        }
     }
 
     logDialogTarget?.let { target ->
@@ -224,6 +242,18 @@ fun HomeScreen(
                 }
             },
             onDismiss = { logDialogTarget = null }
+        )
+    }
+
+    checkInGroupTarget?.let { status ->
+        GroupCheckInDialog(
+            practiceName = status.group.practiceName,
+            groupName = status.group.name,
+            onConfirm = { value ->
+                viewModel.checkInGroup(status.group.id, value)
+                checkInGroupTarget = null
+            },
+            onDismiss = { checkInGroupTarget = null }
         )
     }
 }
@@ -561,6 +591,106 @@ private fun LogProgressDialog(
             TextButton(
                 onClick = { onConfirm(input.toLongOrNull() ?: 0L) },
                 enabled = input.isNotBlank()
+            ) { Text(stringResource(R.string.btn_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_cancel)) }
+        }
+    )
+}
+
+@Composable
+private fun GroupPracticeRow(status: GroupStatus, onCheckIn: () -> Unit) {
+    val doneToday = status.myDoneToday
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CircleCheckbox(isDone = doneToday, onClick = onCheckIn)
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = status.group.practiceName,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "小组：${status.group.name}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(horizontalAlignment = Alignment.End) {
+            if (status.group.targetType == Group.TYPE_TOTAL) {
+                val fraction = if (status.group.targetValue > 0)
+                    (status.myTotal.toFloat() / status.group.targetValue).coerceIn(0f, 1f) else 0f
+                Text(
+                    text = "${status.myTotal} / ${status.group.targetValue}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(Modifier.height(4.dp))
+                LinearProgressIndicator(
+                    progress = { fraction },
+                    modifier = Modifier.width(60.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            } else {
+                if (doneToday) {
+                    Text(
+                        text = "今日 ${status.myTodayValue} 遍",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DoneGreen
+                    )
+                } else {
+                    Text(
+                        text = "未记录",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupCheckInDialog(
+    practiceName: String,
+    groupName: String,
+    onConfirm: (Long) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var amount by rememberSaveable { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(practiceName) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "小组：$groupName",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it.filter { c -> c.isDigit() } },
+                    label = { Text("今日完成数量（遍）") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(amount.toLongOrNull() ?: 0L) },
+                enabled = (amount.toLongOrNull() ?: 0L) > 0L
             ) { Text(stringResource(R.string.btn_confirm)) }
         },
         dismissButton = {

@@ -9,6 +9,8 @@ import com.meritminder.app.data.local.entity.DailyRecord
 import com.meritminder.app.data.local.entity.Goal
 import com.meritminder.app.data.local.entity.Practice
 import com.meritminder.app.data.local.entity.PracticeWithGoals
+import com.meritminder.app.data.remote.GroupRepository
+import com.meritminder.app.data.remote.GroupStatus
 import com.meritminder.app.data.repository.PracticeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,6 +30,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
     private val repository = PracticeRepository(AppDatabase.getInstance(application), userId)
+    private val groupRepo = GroupRepository()
+
+    private val _groupStatuses = MutableStateFlow<List<GroupStatus>>(emptyList())
+    val groupStatuses: StateFlow<List<GroupStatus>> = _groupStatuses.asStateFlow()
     val today: String = LocalDate.now().toString()
 
     val practicesWithGoals: StateFlow<List<PracticeWithGoals>> =
@@ -73,6 +79,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 } catch (_: Exception) {}
                 _syncing.value = false
             }
+        }
+        loadGroups()
+    }
+
+    fun loadGroups() {
+        viewModelScope.launch {
+            try { _groupStatuses.value = groupRepo.getMyGroups() } catch (_: Exception) {}
+        }
+    }
+
+    fun checkInGroup(groupId: String, value: Long) {
+        viewModelScope.launch {
+            try {
+                groupRepo.checkIn(groupId, value)
+                _groupStatuses.value = groupRepo.getMyGroups()
+            } catch (_: Exception) {}
         }
     }
 

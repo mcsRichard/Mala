@@ -191,20 +191,11 @@ private fun GroupCard(status: GroupStatus, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
-                if (status.group.targetType == Group.TYPE_TOTAL) {
-                    Text(
-                        text = "我的累计 ${status.myTotal}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else {
-                    Text(
-                        text = if (status.myDoneToday) "我已打卡" else "我未打卡",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (status.myDoneToday) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.error
-                    )
-                }
+                Text(
+                    text = "我的累计 ${status.myTotal} 遍",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

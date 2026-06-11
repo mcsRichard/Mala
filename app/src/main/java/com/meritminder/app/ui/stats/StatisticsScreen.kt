@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.meritminder.app.data.local.entity.Goal
 import com.meritminder.app.data.local.entity.PracticeWithGoals
+import com.meritminder.app.data.remote.Group
+import com.meritminder.app.data.remote.GroupStatus
 
 @Composable
 fun StatisticsScreen(contentPadding: PaddingValues) {
@@ -42,6 +44,7 @@ fun StatisticsScreen(contentPadding: PaddingValues) {
     val totalActiveDays by vm.totalActiveDays.collectAsState()
     val last7Days by vm.last7Days.collectAsState()
     val streak by vm.streak.collectAsState()
+    val groupStatuses by vm.groupStatuses.collectAsState()
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -53,6 +56,13 @@ fun StatisticsScreen(contentPadding: PaddingValues) {
             item { SectionLabel("各功课统计") }
             items(pwgs) { pwg ->
                 PracticeStatRow(pwg, allTotals[pwg.practice.id] ?: 0L)
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            }
+        }
+        if (groupStatuses.isNotEmpty()) {
+            item { SectionLabel("共修小组") }
+            items(groupStatuses, key = { "group_${it.group.id}" }) { status ->
+                GroupStatRow(status)
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             }
         }
@@ -293,4 +303,56 @@ private fun goalTypeLabel(goal: Goal): String = when {
     goal.deadlineDate != null -> "限期完成"
     goal.periodType == Goal.PERIOD_LONG_TERM -> "终生累计"
     else -> "每日数量"
+}
+
+@Composable
+private fun GroupStatRow(status: GroupStatus) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = status.group.practiceName,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = "小组：${status.group.name} · 共修",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 2.dp)
+            )
+        }
+        Spacer(Modifier.width(16.dp))
+        if (status.group.targetType == Group.TYPE_TOTAL) {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "${status.myTotal} / ${status.group.targetValue} 遍",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                LinearProgressIndicator(
+                    progress = {
+                        if (status.group.targetValue > 0)
+                            (status.myTotal.toFloat() / status.group.targetValue).coerceIn(0f, 1f)
+                        else 0f
+                    },
+                    modifier = Modifier.width(80.dp).padding(top = 4.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            }
+        } else {
+            Text(
+                text = "累计 ${status.myTotal} 遍",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
 }
