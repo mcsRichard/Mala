@@ -8,11 +8,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.google.firebase.auth.FirebaseAuth
 import com.meritminder.app.ui.auth.AuthViewModel
 import com.meritminder.app.ui.auth.LoginScreen
 import com.meritminder.app.ui.auth.RegisterScreen
 import com.meritminder.app.ui.counter.CounterScreen
+import com.meritminder.app.ui.group.GroupDetailScreen
+import com.meritminder.app.ui.group.JoinGroupScreen
 import com.meritminder.app.ui.library.PracticeLibraryScreen
 import com.meritminder.app.ui.main.MainScreen
 import com.meritminder.app.ui.practice.AddPracticeScreen
@@ -84,6 +87,28 @@ fun AppNavGraph() {
         }
         composable("transmissions") {
             TransmissionScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(
+            route = "group_detail/{groupId}",
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType })
+        ) {
+            GroupDetailScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(
+            route = "join_group/{groupId}",
+            arguments = listOf(navArgument("groupId") { type = NavType.StringType }),
+            deepLinks = listOf(navDeepLink { uriPattern = "mala://group/{groupId}" })
+        ) {
+            JoinGroupScreen(
+                onNavigateBack = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate("main") { popUpTo(0) { inclusive = true } }
+                    }
+                },
+                onJoined = {
+                    navController.navigate("main") { popUpTo(0) { inclusive = true } }
+                }
+            )
         }
     }
 }

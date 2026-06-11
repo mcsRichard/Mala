@@ -78,7 +78,11 @@ fun MainScreen(
                 onOpenCounter = onOpenCounter
             )
             Tab.PRACTICE -> PracticeListScreen(contentPadding = innerPadding)
-            Tab.GROUP -> GroupScreen(contentPadding = innerPadding)
+            Tab.GROUP -> GroupScreen(
+                contentPadding = innerPadding,
+                onOpenGroup = { groupId -> navController.navigate("group_detail/$groupId") },
+                onJoinByCode = { code -> navController.navigate("join_group/$code") }
+            )
             Tab.STATS -> StatisticsScreen(contentPadding = innerPadding)
             Tab.PROFILE -> ProfileScreen(
                 contentPadding = innerPadding,

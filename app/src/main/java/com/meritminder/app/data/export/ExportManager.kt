@@ -5,6 +5,8 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.meritminder.app.data.local.AppDatabase
 import com.meritminder.app.data.local.entity.Goal
+import com.meritminder.app.data.remote.Group
+import com.meritminder.app.data.remote.GroupRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -55,6 +57,25 @@ object ExportManager {
         }
         sb.appendLine()
 
+        // ── SECTION 3: 共修小组 ────────────────────────────────────────────────
+        // 云端数据，离线导出时跳过该 Section
+        try {
+            val groupStatuses = GroupRepository().getMyGroups()
+            appendSection(sb, "共修小组",
+                listOf("小组名称", "共修功课", "目标", "今日已打卡", "我的累计", "小组编号"))
+            groupStatuses.forEach { s ->
+                sb.appendLine(row(listOf(
+                    s.group.name,
+                    s.group.practiceName,
+                    s.group.toGroupGoalLabel(),
+                    if (s.myDoneToday) "是" else "否",
+                    s.myTotal.toString(),
+                    s.group.id
+                )))
+            }
+            sb.appendLine()
+        } catch (_: Exception) { /* offline or Firestore unavailable */ }
+
         // ── 新记录类型在此处继续追加 Section ──────────────────────────────────
 
         context.contentResolver.openOutputStream(uri)?.use { os ->
@@ -88,6 +109,11 @@ object ExportManager {
         deadlineDate != null -> "限期完成"
         periodType == Goal.PERIOD_LONG_TERM -> "终生累计"
         else -> "每日数量"
+    }
+
+    private fun Group.toGroupGoalLabel(): String = when (targetType) {
+        Group.TYPE_TOTAL -> "总目标 $targetValue 遍"
+        else -> "每日打卡"
     }
 
     private fun Long.epochToDate(): String = try {

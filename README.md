@@ -39,6 +39,14 @@
 - 字段：名称、上师、时间、地点、备注（全部必填）
 - 支持添加、编辑、删除
 
+### 共修小组
+- 创建小组：设定共修功课与统一目标（当日完成 / 总目标，全组相同）
+- **分享邀请**：生成 `mala://group/编号` 链接，可分享至微信 / WhatsApp 等；也可手动输入 6 位编号加入
+- 受邀者点击链接自动打开 App，查看小组信息后确认加入
+- 小组页查看每个小组今日打卡人数与个人累计进度
+- 小组内打卡（当日完成 / 累计数量），组员列表实时显示各人状态
+- 创建者为管理员：可修改功课目标、解散小组；组员可随时退出
+
 ### 数据导出
 - 导出全部记录为 CSV 文件（带 UTF-8 BOM，Excel 可直接打开）
 - 导出内容：功课记录（含目标、累计数）+ 传承灌顶
@@ -120,6 +128,25 @@ service cloud.firestore {
     }
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    match /groups/{groupId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && resource.data.creatorId == request.auth.uid;
+      match /members/{memberId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && (
+          memberId == request.auth.uid ||
+          get(/databases/$(database)/documents/groups/$(groupId)).data.creatorId == request.auth.uid
+        );
+      }
+      match /checkins/{checkinId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && (
+          checkinId.matches(request.auth.uid + '_.*') ||
+          get(/databases/$(database)/documents/groups/$(groupId)).data.creatorId == request.auth.uid
+        );
+      }
     }
   }
 }
